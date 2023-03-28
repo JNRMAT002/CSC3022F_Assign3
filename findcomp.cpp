@@ -10,7 +10,7 @@
 int main(int argc, char* argv[]) {
     std::string inputPGMFile;
     int minCompSize, maxCompSize; // For "-s" option | sets minimum and maximum valid component size
-    int compThresh; // For "-t" option | sets threshold for component detection
+    unsigned char compThresh; // For "-t" option | sets threshold for component detection
     std::string outputPGMFile; // For "-w" option | sets output PGM File name
 
     inputPGMFile = argv[argc-1]; // Input PGM File will always be the last argument in the invocation
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
         }
 
         if ( strcmp( argv[i], "-t" ) == 0 ) {
-            compThresh = atoi(argv[i+1]);
+            compThresh = static_cast<unsigned char>( atoi(argv[i+1]) );
         }
 
         if ( strcmp( argv[i], "-p" ) == 0 ) {
