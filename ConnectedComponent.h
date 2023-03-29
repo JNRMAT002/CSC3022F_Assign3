@@ -20,4 +20,4 @@ namespace JNRMAT002 {
     };
 }
 
-#endif CONN_COMP_HDR
+#endif

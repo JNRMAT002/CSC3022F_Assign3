@@ -49,7 +49,6 @@ namespace JNRMAT002 {
     print out to std::cout: component ID, number of pixels
     */
     void printComponentData(const ConnectedComponent & theComponent) const;
-
     };
 }
 

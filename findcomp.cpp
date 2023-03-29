@@ -6,6 +6,9 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <fstream>
+#include <sstream>
+// #include "PGMProcessor.h"
 
 int main(int argc, char* argv[]) {
     std::string inputPGMFile;
@@ -36,6 +39,63 @@ int main(int argc, char* argv[]) {
             outputPGMFile = argv[i+1];
         }
     }
+
+    /*
+        Reading the PGM File ***
+    */
+        
+    std::ifstream inputFile(inputPGMFile, std::ios::binary);
+
+    if (!inputFile.is_open()) {
+        std::cerr << "Error: could not open PGM file" << std::endl;
+        
+    }
+
+    std::string line;
+    unsigned char ** pixels;
+    unsigned int imgWidth, imgHeight, maxVal;
+
+    // Read/Discard header
+    std::getline(inputFile, line);
+    int line_count;
+
+    while (std::getline(inputFile, line)) {
+        if (line[0] == '#') { continue; }
+        else { 
+            line_count = 1;
+            std::istringstream ss (line);
+            ss >> imgWidth >> std::ws >> imgHeight;
+            std::cout << imgWidth << " " << imgHeight << std::endl;
+            break; 
+        }
+    }
+
+    while (std::getline(inputFile, line)) {
+
+        if (line_count == 1) {
+            // Get pgm image maxVal
+            std::istringstream ss(line);                
+            ss >> maxVal;
+            line_count += 1;
+            std::cout << maxVal << std::endl;
+        }
+
+        if (line_count == 2) {
+            // Store pixel data in array | imgHeight = numRows, imgWidth = numCols
+            pixels = new unsigned char*[imgHeight];
+            for (int i = 0; i < imgHeight; i++) {
+                pixels[i] = new unsigned char[imgWidth];
+
+                for (int j = 0; j < imgWidth; j++) {
+                    inputFile >> pixels[i][j];
+                }
+            }
+            // std::cout << "TEST" << std::endl;
+        }            
+        
+    }
+
+    inputFile.close();
 
     return 0;
 }
