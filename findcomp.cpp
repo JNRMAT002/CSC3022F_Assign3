@@ -12,8 +12,11 @@
 
 int main(int argc, char* argv[]) {
     std::string inputPGMFile;
-    int minCompSize, maxCompSize; // For "-s" option | sets minimum and maximum valid component size
-    unsigned char compThresh; // For "-t" option | sets threshold for component detection
+    unsigned char ** pixels; // inputPGMFile Binary Data
+    unsigned int imgWidth, imgHeight, maxVal; // Used to read the inputPGMFile data
+    unsigned int minCompSize = 3; // For "-s" option | sets minimum and maximum valid component size. Default minimum set to 3
+    unsigned int maxCompSize =  imgWidth*imgHeight; // Default max is imgWidth*imgHeight
+    unsigned char compThresh = 128; // For "-t" option | sets threshold for component detection. Default value set to 128
     std::string outputPGMFile; // For "-w" option | sets output PGM File name
 
     inputPGMFile = argv[argc-1]; // Input PGM File will always be the last argument in the invocation
@@ -28,7 +31,9 @@ int main(int argc, char* argv[]) {
         }
 
         if ( strcmp( argv[i], "-t" ) == 0 ) {
-            compThresh = static_cast<unsigned char>( atoi(argv[i+1]) );
+            if ( atoi(argv[i+1]) > 255 ) { compThresh = 255; }
+            else if ( atoi(argv[i+1]) < 0 ) { compThresh = 0; }
+            else { compThresh = static_cast<unsigned char>( atoi(argv[i+1]) ); }
         }
 
         if ( strcmp( argv[i], "-p" ) == 0 ) {
@@ -52,8 +57,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::string line;
-    unsigned char ** pixels;
-    unsigned int imgWidth, imgHeight, maxVal;
 
     // Read/Discard header
     std::getline(inputFile, line);
@@ -65,7 +68,7 @@ int main(int argc, char* argv[]) {
             line_count = 1;
             std::istringstream ss (line);
             ss >> imgWidth >> std::ws >> imgHeight;
-            std::cout << imgWidth << " " << imgHeight << std::endl;
+            // std::cout << imgWidth << " " << imgHeight << std::endl;
             break; 
         }
     }
@@ -77,7 +80,7 @@ int main(int argc, char* argv[]) {
             std::istringstream ss(line);                
             ss >> maxVal;
             line_count += 1;
-            std::cout << maxVal << std::endl;
+            // std::cout << maxVal << std::endl;
         }
 
         if (line_count == 2) {
