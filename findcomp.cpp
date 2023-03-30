@@ -13,9 +13,10 @@
 int main(int argc, char* argv[]) {
     std::string inputPGMFile;
     unsigned char ** pixels; // inputPGMFile Binary Data
-    unsigned int imgWidth, imgHeight, maxVal; // Used to read the inputPGMFile data
+    unsigned char maxVal;
+    unsigned int imgWidth, imgHeight; // Used to read the inputPGMFile data
     unsigned int minCompSize = 3; // For "-s" option | sets minimum and maximum valid component size. Default minimum set to 3
-    unsigned int maxCompSize =  imgWidth*imgHeight; // Default max is imgWidth*imgHeight
+    unsigned int maxCompSize =  0; // Default max is imgWidth*imgHeight
     unsigned char compThresh = 128; // For "-t" option | sets threshold for component detection. Default value set to 128
     std::string outputPGMFile; // For "-w" option | sets output PGM File name
 
@@ -99,6 +100,13 @@ int main(int argc, char* argv[]) {
     }
 
     inputFile.close();
+
+    // Set default size if no maxSize was entered in the cmd invocation
+    if (maxCompSize == 0) {
+        maxCompSize = imgWidth*imgHeight;
+    }
+
+    
 
     return 0;
 }

@@ -13,6 +13,9 @@
 namespace JNRMAT002 {
     class PGMProcessor {
     public:
+    // Constructor
+    PGMProcessor(unsigned char **pixels, unsigned int imgWidth, unsigned int imgHeight);
+
     /* process the input image to extract all the connected components,
     based on the supplied threshold (0...255) and excluding any components
     of less than the minValidSize. The final number of components that
@@ -49,6 +52,11 @@ namespace JNRMAT002 {
     print out to std::cout: component ID, number of pixels
     */
     void printComponentData(const ConnectedComponent & theComponent) const;
+    
+    private:
+    unsigned char **inputPGMData;
+    unsigned int rows, cols;
+
     };
 }
 

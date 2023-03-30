@@ -1,7 +1,11 @@
-// #include "PGMProcessor.h"
-// #include <string>
-// #include <iostream>
+#include "PGMProcessor.h"
+#include <string>
+#include <iostream>
 
-// using namespace JNRMAT002 {
-
-// }
+namespace JNRMAT002 {
+    PGMProcessor::PGMProcessor(unsigned char **pixels, unsigned int imgWidth, unsigned int imgHeight) {
+        inputPGMData = pixels;
+        rows = imgHeight;
+        cols = imgWidth;
+    }
+}
