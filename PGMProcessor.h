@@ -24,7 +24,6 @@ namespace JNRMAT002 {
     */
     int extractComponents(unsigned char threshold, int minValidSize);
 
-
     /* iterate - with an iterator - though your container of connected
     components and filter out (remove) all the components which do not
     obey the size criteria pass as arguments. The number remaining
@@ -53,10 +52,18 @@ namespace JNRMAT002 {
     */
     void printComponentData(const ConnectedComponent & theComponent) const;
     
+    // Executes floodfill algo
+    void floodfill(unsigned char threshold, int startRow, int startCol);
+
+    // Checks if a pixel exceeds the threshold value
+    bool isValid (unsigned char threshold, unsigned int row, unsigned int col);
+
     private:
     unsigned char **inputPGMData;
     unsigned int rows, cols;
-
+    int numComponents; //Final number of components stored in container | return value for extractComponents()
+    const unsigned char maxIntensity = 255;
+    const unsigned char minIntensity = 0;
     };
 }
 
