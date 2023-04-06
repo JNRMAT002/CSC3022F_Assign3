@@ -67,6 +67,12 @@ namespace JNRMAT002 {
     */
     void printComponentData(const ConnectedComponent & theComponent) const;
     
+/*
+    print out all the component data as well as the total
+    component number and the sizes of the smallest and largest components
+*/
+    void print();
+
     // Executes floodfill algo
     void floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol);
 

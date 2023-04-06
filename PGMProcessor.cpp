@@ -38,10 +38,8 @@ PGMProcessor::PGMProcessor(PGMProcessor &&rhs) {
 }
 
 // Constructor (Move Assignment)
-PGMProcessor &::PGMProcessor::operator=(PGMProcessor &&rhs)
-{
-    if (this != &rhs)
-    {
+PGMProcessor &PGMProcessor::operator=(PGMProcessor &&rhs) {
+    if (this != &rhs) {
         inputPGMFile = rhs.inputPGMFile;
         compSharedPtr = rhs.compSharedPtr;
     }
@@ -56,7 +54,7 @@ PGMProcessor::~PGMProcessor() {
 }
 
 
-// Implements floodfill algorithm
+// Calls floodfill algorithm
 int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
     int startRow = 0;
     int startCol = 0;
@@ -80,6 +78,7 @@ int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
     return numComponents;
 }
 
+// Floodfill (BFS) algorithm implentation
 void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol) {
     std::vector<std::pair<int,int>> queue;
     int iterateRows[] = {1, -1, 0, 0};
@@ -108,6 +107,7 @@ void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char thresho
     }
 }
 
+// Part of Floodfill Algo implementation
 bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col) {
     if ( (row < 1) || (row > rows) ) { return false; } //Error checking rows (within bounds)
     if ( (col < 1) || (col > cols) ) { return false; } //Error checking cols (within bounds)
@@ -119,6 +119,7 @@ bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold
     return true;
 }
 
+// Read input PGM data from user's file
 unsigned int imgWidth, imgHeight, maxVal = 0;
 unsigned char** PGMProcessor::readPGMData() {
     unsigned char** pixels;
@@ -173,4 +174,72 @@ unsigned char** PGMProcessor::readPGMData() {
 
     inputFile.close();
     return pixels;
+}
+
+// bool PGMProcessor::writeComponents(const std::string & outFileName) {
+
+// }
+
+int PGMProcessor::filterComponentsBySize(int minSize, int maxSize){
+    compSharedPtr.erase(std::remove_if(compSharedPtr.begin(), compSharedPtr.end(), [minSize,maxSize](std::shared_ptr<ConnectedComponent> ConnCompTemp) -> bool {
+        if(ConnCompTemp->getPixelNum()<minSize || ConnCompTemp->getPixelNum()>maxSize) {
+        return true;
+        }
+    } ), compSharedPtr.end());
+}
+
+// return number of components
+int PGMProcessor::getComponentCount(void) const {
+    return compSharedPtr.size();
+}
+
+// return number of pixels in largest component
+int PGMProcessor::getLargestSize(void) const {
+    int largest = 0;
+
+    for (int i = 0; i < compSharedPtr.size(); i++) {
+        if (compSharedPtr[i]->getPixelNum() > largest) {
+            largest = compSharedPtr[i]->getPixelNum();
+        }
     }
+
+    return largest;
+}
+
+// return number of pixels in smallest component
+int PGMProcessor::getSmallestSize(void) const {
+    int smallest = 0;
+
+    for (int i = 0; i < compSharedPtr.size(); i++) {
+        if (compSharedPtr[i]->getPixelNum() < smallest) {
+            smallest = compSharedPtr[i]->getPixelNum();
+        }
+    }
+
+    return smallest;
+}
+
+/* print the data for a component to std::cout
+see ConnectedComponent class;
+print out to std::cout: component ID, number of pixels
+*/
+void PGMProcessor::printComponentData(const ConnectedComponent &comp) const {
+    std::cout << comp.getID() << " - Size: " << comp.getPixelNum() << std::endl;
+}
+
+/*
+    print out all the component data as well as the total
+    component number and the sizes of the smallest and largest components
+    For "-p" invocation
+*/
+void PGMProcessor::print() {
+    std::cout << "Components:" << std::endl;
+
+    for (int i = 0; i < compSharedPtr.size(); i++) {
+        printComponentData(*compSharedPtr[i]);
+    }
+
+    std::cout << "Total Components: " << sizeof(compSharedPtr) << std::endl;
+    std::cout << "Smallest Component: " << getSmallestSize() << std::endl;
+    std::cout << "Largest Component: " << getLargestSize() << std::endl;
+}
