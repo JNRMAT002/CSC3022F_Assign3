@@ -13,6 +13,8 @@
 namespace JNRMAT002 {
     class PGMProcessor {
     public:
+    PGMProcessor(std::string inputPGMFile);
+
     // Constructor
     PGMProcessor(unsigned char **pixels, unsigned int imgWidth, unsigned int imgHeight);
 
@@ -53,12 +55,16 @@ namespace JNRMAT002 {
     void printComponentData(const ConnectedComponent & theComponent) const;
     
     // Executes floodfill algo
-    void floodfill(unsigned char threshold, int startRow, int startCol);
+    void floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol);
 
     // Checks if a pixel exceeds the threshold value
-    bool isValid (unsigned char threshold, unsigned int row, unsigned int col);
+    bool isValid (unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col);
+
+    // Reads PGM Image Data
+    unsigned char** PGMProcessor::readPGMData();
 
     private:
+    std::string inputPGMFile;
     unsigned char **inputPGMData;
     unsigned int rows, cols;
     int numComponents; //Final number of components stored in container | return value for extractComponents()
