@@ -6,83 +6,118 @@
 #include <cstring>
 #include <iostream>
 
-namespace JNRMAT002 {
-    PGMProcessor::PGMProcessor(std::string inputPGMFile) {
-        inputPGMFile = inputPGMFile;
+using namespace JNRMAT002;
+
+// Constructor (Default)
+PGMProcessor::PGMProcessor(std::string inputPGMFile) {
+    inputPGMFile = inputPGMFile;
+}
+
+// Constructor (Copy)
+PGMProcessor::PGMProcessor(const PGMProcessor &rhs) {
+    inputPGMFile = rhs.inputPGMFile;
+    for (size_t i = 0; i < rhs.compSharedPtr.size(); i++) {
+        *(compSharedPtr[i]) = *(rhs.compSharedPtr[i]);
     }
+}
 
-    // Constructor
-    PGMProcessor::PGMProcessor(unsigned char **pixels, unsigned int imgWidth, unsigned int imgHeight) {
-        inputPGMData = pixels;
-        rows = imgHeight;
-        cols = imgWidth;
-        numComponents = 0;
-
+// Constructor (Copy Assignment)
+PGMProcessor &PGMProcessor::operator=(const PGMProcessor &rhs) {
+    this->inputPGMFile = rhs.inputPGMFile;
+    for (size_t i = 0; i < rhs.compSharedPtr.size(); i++) {
+        *compSharedPtr[i] = *(rhs.compSharedPtr[i]);
     }
+    return *this;
+}
 
-    // Implements floodfill algorithm
-    int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
-        int startRow = 0;
-        int startCol = 0;
-        int numComponents = 0;
-        inputPGMData = readPGMData();
+// Constructor (Move)
+PGMProcessor::PGMProcessor(PGMProcessor &&rhs) {
+    inputPGMFile = rhs.inputPGMFile;
+    rhs.inputPGMFile = "";
+    std::move(begin(rhs.compSharedPtr), end(rhs.compSharedPtr), std::inserter(compSharedPtr, end(compSharedPtr)));
+}
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                if ( inputPGMData[i][j] < threshold ) {
-                    // JNRMAT002::ConnectedComponent temp(numComponents);
-                    floodfill(inputPGMData, threshold, i, j);
+// Constructor (Move Assignment)
+PGMProcessor &::PGMProcessor::operator=(PGMProcessor &&rhs)
+{
+    if (this != &rhs)
+    {
+        inputPGMFile = rhs.inputPGMFile;
+        compSharedPtr = rhs.compSharedPtr;
+    }
+    return *this;
+}
 
-                    // if (temp.getPixelNum() >= minValidSize)
-                    // {
-                    //     numComponents.push_back(std::make_shared<JNRMAT002::ConnectedComponent>(temp));
-                    //     numComponents++;
-                    // }
+// Destructor
+PGMProcessor::~PGMProcessor() {
+    for (size_t i = 0; i < compSharedPtr.size(); i++) {
+        compSharedPtr[i] = nullptr;
+    }
+}
+
+
+// Implements floodfill algorithm
+int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
+    int startRow = 0;
+    int startCol = 0;
+    int numComponents = 0;
+    inputPGMData = readPGMData();
+
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            if ( inputPGMData[i][j] < threshold ) {
+                ConnectedComponent temp(numComponents);
+                floodfill(inputPGMData, threshold, i, j);
+
+                if (temp.getPixelNum() >= minValidSize) {
+                    compSharedPtr.push_back(std::make_shared<ConnectedComponent>(temp));
+                    numComponents++;
                 }
             }
         }
-
-        return numComponents;
     }
 
-    void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol) {
-        std::vector<std::pair<int,int>> queue;
-        int iterateRows[] = {1, -1, 0, 0};
-        int iterateCols[] = {0, 0, 1, -1};
-        
-        
+    return numComponents;
+}
 
-        std::pair<int, int> p(startRow, startCol);
-        queue.push_back(p);
-        
-        inputPGMData[startRow][startCol] = 0; // "Visited = true"
+void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol) {
+    std::vector<std::pair<int,int>> queue;
+    int iterateRows[] = {1, -1, 0, 0};
+    int iterateCols[] = {0, 0, 1, -1};
+    
+    
 
-        while ( !queue.empty() ) {
-            std::pair<int,int> currentRowCol = queue.front();
-            queue.pop_back();
-            // inputPGMData[currentRowCol.first][currentRowCol.second] = minIntensity; // Change to 0 since been visited
+    std::pair<int, int> p(startRow, startCol);
+    queue.push_back(p);
+    
+    inputPGMData[startRow][startCol] = 0; // "Visited = true"
 
-            for ( int i = 0; i < 4 ; i++ ) {
-                if ( isValid(inputPGMData, currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i], threshold) ) {
-                    inputPGMData[currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]] = 0;
-                    // Create/Add to connected component HERE
-                    std::pair<int, int> p(currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]);
-                    queue.push_back(p);
-                }
+    while ( !queue.empty() ) {
+        std::pair<int,int> currentRowCol = queue.front();
+        queue.pop_back();
+        // inputPGMData[currentRowCol.first][currentRowCol.second] = minIntensity; // Change to 0 since been visited
+
+        for ( int i = 0; i < 4 ; i++ ) {
+            if ( isValid(inputPGMData, currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i], threshold) ) {
+                inputPGMData[currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]] = 0;
+                // Create/Add to connected component HERE
+                std::pair<int, int> p(currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]);
+                queue.push_back(p);
             }
         }
     }
+}
 
-    bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col) {
-        if ( (row < 1) || (row > rows) ) { return false; } //Error checking rows (within bounds)
-        if ( (col < 1) || (col > cols) ) { return false; } //Error checking cols (within bounds)
-        //If the pixel is less than the threshold value, return false
-        if ( (inputPGMData[row][col] < threshold) ) {
-            return false;
-        }
-
-        return true;
+bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col) {
+    if ( (row < 1) || (row > rows) ) { return false; } //Error checking rows (within bounds)
+    if ( (col < 1) || (col > cols) ) { return false; } //Error checking cols (within bounds)
+    //If the pixel is less than the threshold value, return false
+    if ( (inputPGMData[row][col] < threshold) ) {
+        return false;
     }
+
+    return true;
+}
 
 unsigned int imgWidth, imgHeight, maxVal = 0;
 unsigned char** PGMProcessor::readPGMData() {
@@ -139,4 +174,3 @@ unsigned char** PGMProcessor::readPGMData() {
     inputFile.close();
     return pixels;
     }
-}

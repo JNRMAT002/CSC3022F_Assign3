@@ -13,10 +13,23 @@
 namespace JNRMAT002 {
     class PGMProcessor {
     public:
+    // Constructor (Default)
     PGMProcessor(std::string inputPGMFile);
 
-    // Constructor
-    PGMProcessor(unsigned char **pixels, unsigned int imgWidth, unsigned int imgHeight);
+    // Constructor (Copy)
+    PGMProcessor(const PGMProcessor &rhs);
+
+    // Constructor (Copy Assignment)
+    PGMProcessor &operator=(const PGMProcessor &rhs);
+
+    // Constructor (Move)
+    PGMProcessor(PGMProcessor &&rhs);
+
+    // Constructor (Move Assignment)
+    PGMProcessor &::PGMProcessor::operator=(PGMProcessor &&rhs);
+
+    // Destructor
+    ~PGMProcessor();
 
     /* process the input image to extract all the connected components,
     based on the supplied threshold (0...255) and excluding any components
@@ -65,6 +78,7 @@ namespace JNRMAT002 {
 
     private:
     std::string inputPGMFile;
+    std::vector<std::shared_ptr<ConnectedComponent>> compSharedPtr;
     unsigned char **inputPGMData;
     unsigned int rows, cols;
     int numComponents; //Final number of components stored in container | return value for extractComponents()
