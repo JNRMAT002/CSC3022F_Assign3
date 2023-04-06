@@ -10,12 +10,12 @@ using namespace JNRMAT002;
 
 // Constructor (Default)
 PGMProcessor::PGMProcessor(std::string inputPGMFile) {
-    inputPGMFile = inputPGMFile;
+    inputFile = inputPGMFile;
 }
 
 // Constructor (Copy)
 PGMProcessor::PGMProcessor(const PGMProcessor &rhs) {
-    inputPGMFile = rhs.inputPGMFile;
+    inputFile = rhs.inputFile;
     for (size_t i = 0; i < rhs.compSharedPtr.size(); i++) {
         *(compSharedPtr[i]) = *(rhs.compSharedPtr[i]);
     }
@@ -23,7 +23,7 @@ PGMProcessor::PGMProcessor(const PGMProcessor &rhs) {
 
 // Constructor (Copy Assignment)
 PGMProcessor &PGMProcessor::operator=(const PGMProcessor &rhs) {
-    this->inputPGMFile = rhs.inputPGMFile;
+    this->inputFile = rhs.inputFile;
     for (size_t i = 0; i < rhs.compSharedPtr.size(); i++) {
         *compSharedPtr[i] = *(rhs.compSharedPtr[i]);
     }
@@ -32,15 +32,15 @@ PGMProcessor &PGMProcessor::operator=(const PGMProcessor &rhs) {
 
 // Constructor (Move)
 PGMProcessor::PGMProcessor(PGMProcessor &&rhs) {
-    inputPGMFile = rhs.inputPGMFile;
-    rhs.inputPGMFile = "";
+    inputFile = rhs.inputFile;
+    rhs.inputFile = "";
     std::move(begin(rhs.compSharedPtr), end(rhs.compSharedPtr), std::inserter(compSharedPtr, end(compSharedPtr)));
 }
 
 // Constructor (Move Assignment)
 PGMProcessor &PGMProcessor::operator=(PGMProcessor &&rhs) {
     if (this != &rhs) {
-        inputPGMFile = rhs.inputPGMFile;
+        inputFile = rhs.inputFile;
         compSharedPtr = rhs.compSharedPtr;
     }
     return *this;
@@ -56,16 +56,14 @@ PGMProcessor::~PGMProcessor() {
 
 // Calls floodfill algorithm
 int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
-    int startRow = 0;
-    int startCol = 0;
     int numComponents = 0;
-    inputPGMData = readPGMData();
+    unsigned char **inputPGMData = readPGMData();
 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            if ( inputPGMData[i][j] < threshold ) {
+            if ( isValid(inputPGMData, threshold, i, j) ) {
                 ConnectedComponent temp(numComponents);
-                floodfill(inputPGMData, threshold, i, j);
+                floodfill(inputPGMData, temp, threshold, i, j);
 
                 if (temp.getPixelNum() >= minValidSize) {
                     compSharedPtr.push_back(std::make_shared<ConnectedComponent>(temp));
@@ -79,13 +77,10 @@ int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
 }
 
 // Floodfill (BFS) algorithm implentation
-void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol) {
+void PGMProcessor::floodfill(unsigned char **inputPGMData, ConnectedComponent &comp, unsigned char threshold, int startRow, int startCol) {
     std::vector<std::pair<int,int>> queue;
     int iterateRows[] = {1, -1, 0, 0};
     int iterateCols[] = {0, 0, 1, -1};
-    
-    
-
     std::pair<int, int> p(startRow, startCol);
     queue.push_back(p);
     
@@ -93,15 +88,15 @@ void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char thresho
 
     while ( !queue.empty() ) {
         std::pair<int,int> currentRowCol = queue.front();
+        comp.addPixel(currentRowCol);
         queue.pop_back();
-        // inputPGMData[currentRowCol.first][currentRowCol.second] = minIntensity; // Change to 0 since been visited
 
         for ( int i = 0; i < 4 ; i++ ) {
-            if ( isValid(inputPGMData, currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i], threshold) ) {
-                inputPGMData[currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]] = 0;
-                // Create/Add to connected component HERE
+            if ( isValid(inputPGMData, threshold, currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]) ) {
                 std::pair<int, int> p(currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]);
                 queue.push_back(p);
+                inputPGMData[currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]] = 0;
+                
             }
         }
     }
@@ -109,23 +104,22 @@ void PGMProcessor::floodfill(unsigned char **inputPGMData, unsigned char thresho
 
 // Part of Floodfill Algo implementation
 bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col) {
-    if ( (row < 1) || (row > rows) ) { return false; } //Error checking rows (within bounds)
-    if ( (col < 1) || (col > cols) ) { return false; } //Error checking cols (within bounds)
+    if ( (row < 0) || (row > rows) ) { return false; } //Error checking rows (within bounds)
+    if ( (col < 0) || (col > cols) ) { return false; } //Error checking cols (within bounds)
     //If the pixel is less than the threshold value, return false
-    if ( (inputPGMData[row][col] < threshold) ) {
-        return false;
-    }
+    if ( (inputPGMData[row][col] < threshold) ) { return false; }
 
     return true;
 }
 
 // Read input PGM data from user's file
-unsigned int imgWidth, imgHeight, maxVal = 0;
+unsigned int cols, rows, maxVal = 0;
 unsigned char** PGMProcessor::readPGMData() {
     unsigned char** pixels;
-    std::ifstream inputFile(inputPGMFile, std::ios::binary);
+    std::ifstream file(inputFile, std::ios::binary);
 
-    if (!inputFile.is_open()) {
+    // std::cout << inputFile << std::endl;
+    if (!file.is_open()) {
         std::cerr << "Error: could not open PGM file" << std::endl;
         
     }
@@ -133,21 +127,21 @@ unsigned char** PGMProcessor::readPGMData() {
     std::string line;
 
     // Read/Discard header
-    std::getline(inputFile, line);
+    std::getline(file, line);
     int line_count;
 
-    while (std::getline(inputFile, line)) {
+    while (std::getline(file, line)) {
         if (line[0] == '#') { continue; }
         else { 
             line_count = 1;
             std::istringstream ss (line);
-            ss >> imgWidth >> std::ws >> imgHeight;
+            ss >> cols >> std::ws >> rows;
             // std::cout << imgWidth << " " << imgHeight << std::endl;
             break; 
         }
     }
 
-    while (std::getline(inputFile, line)) {
+    while (std::getline(file, line)) {
 
         if (line_count == 1) {
             // Get pgm image maxVal
@@ -159,12 +153,12 @@ unsigned char** PGMProcessor::readPGMData() {
 
         if (line_count == 2) {
             // Store pixel data in array | imgHeight = numRows, imgWidth = numCols
-            pixels = new unsigned char*[imgHeight];
-            for (int i = 0; i < imgHeight; i++) {
-                pixels[i] = new unsigned char[imgWidth];
+            pixels = new unsigned char*[rows];
+            for (int i = 0; i < rows; i++) {
+                pixels[i] = new unsigned char[cols];
 
-                for (int j = 0; j < imgWidth; j++) {
-                    inputFile >> pixels[i][j];
+                for (int j = 0; j < cols; j++) {
+                    file >> pixels[i][j];
                 }
             }
             // std::cout << "TEST" << std::endl;
@@ -172,7 +166,7 @@ unsigned char** PGMProcessor::readPGMData() {
         
     }
 
-    inputFile.close();
+    file.close();
     return pixels;
 }
 
@@ -181,11 +175,17 @@ unsigned char** PGMProcessor::readPGMData() {
 // }
 
 int PGMProcessor::filterComponentsBySize(int minSize, int maxSize){
-    compSharedPtr.erase(std::remove_if(compSharedPtr.begin(), compSharedPtr.end(), [minSize,maxSize](std::shared_ptr<ConnectedComponent> ConnCompTemp) -> bool {
-        if(ConnCompTemp->getPixelNum()<minSize || ConnCompTemp->getPixelNum()>maxSize) {
-        return true;
+    // Iterate through the vector
+    for (auto iter = compSharedPtr.begin(); iter != compSharedPtr.end(); ) {
+        // If the number of pixels is less than minSize or greater than maxSize, remove the element
+        if ((*iter)->getPixelNum() < minSize || (*iter)->getPixelNum() > maxSize) {
+            iter = compSharedPtr.erase(iter); // Erase the current element and update the iterator
+        } else {
+            ++iter; // Move to the next element
         }
-    } ), compSharedPtr.end());
+    }
+
+    return compSharedPtr.size();
 }
 
 // return number of components

@@ -8,6 +8,7 @@
 #define PGM_HDR
 
 #include <string>
+#include <memory>
 #include "ConnectedComponent.h"
 
 namespace JNRMAT002 {
@@ -26,7 +27,7 @@ namespace JNRMAT002 {
     PGMProcessor(PGMProcessor &&rhs);
 
     // Constructor (Move Assignment)
-    PGMProcessor &::PGMProcessor::operator=(PGMProcessor &&rhs);
+    PGMProcessor &operator=(PGMProcessor &&rhs);
 
     // Destructor
     ~PGMProcessor();
@@ -74,18 +75,17 @@ namespace JNRMAT002 {
     void print();
 
     // Executes floodfill algo
-    void floodfill(unsigned char **inputPGMData, unsigned char threshold, int startRow, int startCol);
+    void floodfill(unsigned char **inputPGMData, ConnectedComponent &comp, unsigned char threshold, int startRow, int startCol);
 
     // Checks if a pixel exceeds the threshold value
     bool isValid (unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col);
 
     // Reads PGM Image Data
-    unsigned char** PGMProcessor::readPGMData();
+    unsigned char** readPGMData();
 
     private:
-    std::string inputPGMFile;
+    std::string inputFile;
     std::vector<std::shared_ptr<ConnectedComponent>> compSharedPtr;
-    unsigned char **inputPGMData;
     unsigned int rows, cols;
     int numComponents; //Final number of components stored in container | return value for extractComponents()
     const unsigned char maxIntensity = 255;

@@ -12,7 +12,25 @@
 namespace JNRMAT002 {
     class ConnectedComponent {
         public:
-        ConnectedComponent(int compID);
+        // Constructor (Default)
+        ConnectedComponent(int ID);
+
+        // Destructor
+        ~ConnectedComponent();
+
+        // Constructor (Copy)
+        ConnectedComponent(const ConnectedComponent &rhs);
+
+        // Constructor (Copy Assignment)
+        ConnectedComponent &operator=(const ConnectedComponent &rhs);
+
+        // Constructor (Move)
+        ConnectedComponent(ConnectedComponent &&rhs);
+
+        // Constructor (Move Assignment)
+        ConnectedComponent &operator=(ConnectedComponent &&rhs);
+
+
 
         int getID() const;
 
@@ -20,7 +38,7 @@ namespace JNRMAT002 {
 
         std::vector<std::pair<int,int>> getPixels() const;
 
-        void addPixel(std::pair<int,int> newPixel);
+        void addPixel(std::pair<int,int> newPair);
 
         private:
             int numPixels;

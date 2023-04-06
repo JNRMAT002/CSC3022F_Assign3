@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
     unsigned int maxCompSize =  0; // Default max is imgWidth*imgHeight
     unsigned char compThresh = 128; // For "-t" option | sets threshold for component detection. Default value set to 128
     std::string outputPGMFile; // For "-w" option | sets output PGM File name
+    bool print_ = false;
 
     inputPGMFile = argv[argc-1]; // Input PGM File will always be the last argument in the invocation
 
@@ -40,7 +41,8 @@ int main(int argc, char* argv[]) {
         }
 
         if ( strcmp( argv[i], "-p" ) == 0 ) {
-            std::cout << "Print component data" << std::endl;
+            print_ = true;
+            // std::cout << "Print component data" << std::endl;
         }
 
         if ( strcmp( argv[i], "-w" ) == 0 ) {
@@ -56,6 +58,10 @@ int main(int argc, char* argv[]) {
 
     PGMProcessor p(inputPGMFile);
     p.extractComponents(compThresh,minCompSize);
+    p.filterComponentsBySize(minCompSize, maxCompSize);
+    if (print_) {
+        p.print();
+    }
     
 
     return 0;
