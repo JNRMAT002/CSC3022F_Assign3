@@ -8,7 +8,9 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
-// #include "PGMProcessor.h"
+#include "PGMProcessor.h"
+
+using namespace JNRMAT002;
 
 int main(int argc, char* argv[]) {
     std::string inputPGMFile;
@@ -45,11 +47,6 @@ int main(int argc, char* argv[]) {
             outputPGMFile = argv[i+1];
         }
     }
-
-    /*
-        Reading the PGM File ***
-    */
-        
     
 
     // Set default size if no maxSize was entered in the cmd invocation
@@ -57,6 +54,8 @@ int main(int argc, char* argv[]) {
         maxCompSize = imgWidth*imgHeight;
     }
 
+    PGMProcessor p(inputPGMFile);
+    p.extractComponents(compThresh,minCompSize);
     
 
     return 0;
