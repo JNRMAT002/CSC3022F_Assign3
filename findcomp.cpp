@@ -14,8 +14,6 @@ using namespace JNRMAT002;
 
 int main(int argc, char* argv[]) {
     std::string inputPGMFile;
-    unsigned char ** pixels; // inputPGMFile Binary Data
-    unsigned char maxVal;
     unsigned int imgWidth, imgHeight; // Used to read the inputPGMFile data
     unsigned int minCompSize = 3; // For "-s" option | sets minimum and maximum valid component size. Default minimum set to 3
     unsigned int maxCompSize =  0; // Default max is imgWidth*imgHeight
@@ -52,9 +50,9 @@ int main(int argc, char* argv[]) {
     
 
     // Set default size if no maxSize was entered in the cmd invocation
-    if (maxCompSize == 0) {
-        maxCompSize = imgWidth*imgHeight;
-    }
+    // if (maxCompSize == 0) {
+    //     maxCompSize = 0;
+    // }
 
     PGMProcessor p(inputPGMFile);
     p.extractComponents(compThresh,minCompSize);

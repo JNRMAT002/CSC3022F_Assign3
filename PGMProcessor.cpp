@@ -11,12 +11,13 @@ using namespace JNRMAT002;
 // Constructor (Default)
 PGMProcessor::PGMProcessor(std::string inputPGMFile) {
     inputFile = inputPGMFile;
+
 }
 
 // Constructor (Copy)
 PGMProcessor::PGMProcessor(const PGMProcessor &rhs) {
     inputFile = rhs.inputFile;
-    for (size_t i = 0; i < rhs.compSharedPtr.size(); i++) {
+    for (int i = 0; i < rhs.compSharedPtr.size(); i++) {
         *(compSharedPtr[i]) = *(rhs.compSharedPtr[i]);
     }
 }
@@ -24,7 +25,7 @@ PGMProcessor::PGMProcessor(const PGMProcessor &rhs) {
 // Constructor (Copy Assignment)
 PGMProcessor &PGMProcessor::operator=(const PGMProcessor &rhs) {
     this->inputFile = rhs.inputFile;
-    for (size_t i = 0; i < rhs.compSharedPtr.size(); i++) {
+    for (int i = 0; i < rhs.compSharedPtr.size(); i++) {
         *compSharedPtr[i] = *(rhs.compSharedPtr[i]);
     }
     return *this;
@@ -48,7 +49,7 @@ PGMProcessor &PGMProcessor::operator=(PGMProcessor &&rhs) {
 
 // Destructor
 PGMProcessor::~PGMProcessor() {
-    for (size_t i = 0; i < compSharedPtr.size(); i++) {
+    for (int i = 0; i < compSharedPtr.size(); i++) {
         compSharedPtr[i] = nullptr;
     }
 }
@@ -58,21 +59,29 @@ PGMProcessor::~PGMProcessor() {
 int PGMProcessor::extractComponents(unsigned char threshold, int minValidSize) {
     int numComponents = 0;
     unsigned char **inputPGMData = readPGMData();
-
+    // int idCount = 0;
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             if ( isValid(inputPGMData, threshold, i, j) ) {
-                ConnectedComponent temp(numComponents);
-                floodfill(inputPGMData, temp, threshold, i, j);
+                // std::shared_ptr<ConnectedComponent> newComp = std::make_shared<ConnectedComponent>(idCount);
+                ConnectedComponent newComp(numComponents);
+                // idCount++;
 
-                if (temp.getPixelNum() >= minValidSize) {
-                    compSharedPtr.push_back(std::make_shared<ConnectedComponent>(temp));
+                floodfill(inputPGMData, newComp, threshold, i, j);
+
+                if (newComp.getPixelNum() >= minValidSize) {
+                                        std::cout << "test" << std::endl;
+
+                    compSharedPtr.push_back(std::make_shared<ConnectedComponent>(std::move(newComp)));
+                        std::cout << "test2" << std::endl;
+
                     numComponents++;
+                    // std::cout << numComponents <<std::endl;
                 }
             }
         }
     }
-
+    // std::cout << numComponents <<std::endl;
     return numComponents;
 }
 
@@ -83,7 +92,6 @@ void PGMProcessor::floodfill(unsigned char **inputPGMData, ConnectedComponent &c
     int iterateCols[] = {0, 0, 1, -1};
     std::pair<int, int> p(startRow, startCol);
     queue.push_back(p);
-    
     inputPGMData[startRow][startCol] = 0; // "Visited = true"
 
     while ( !queue.empty() ) {
@@ -93,17 +101,21 @@ void PGMProcessor::floodfill(unsigned char **inputPGMData, ConnectedComponent &c
 
         for ( int i = 0; i < 4 ; i++ ) {
             if ( isValid(inputPGMData, threshold, currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]) ) {
+                // std::cout << currentRowCol.first << std::endl;
                 std::pair<int, int> p(currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]);
                 queue.push_back(p);
-                inputPGMData[currentRowCol.first + iterateRows[i], currentRowCol.second + iterateCols[i]] = 0;
-                
+                inputPGMData[currentRowCol.first + iterateRows[i]][currentRowCol.second + iterateCols[i]] = 0;
+                // std::cout << "test" <<std::endl;
             }
+                // std::cout << sizeof(queue) <<std::endl;
+
         }
     }
 }
 
 // Part of Floodfill Algo implementation
 bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold, unsigned int row, unsigned int col) {
+    // std::cout << cols << std::endl;
     if ( (row < 0) || (row > rows) ) { return false; } //Error checking rows (within bounds)
     if ( (col < 0) || (col > cols) ) { return false; } //Error checking cols (within bounds)
     //If the pixel is less than the threshold value, return false
@@ -113,7 +125,6 @@ bool PGMProcessor::isValid(unsigned char **inputPGMData, unsigned char threshold
 }
 
 // Read input PGM data from user's file
-unsigned int cols, rows, maxVal = 0;
 unsigned char** PGMProcessor::readPGMData() {
     unsigned char** pixels;
     std::ifstream file(inputFile, std::ios::binary);
@@ -176,6 +187,13 @@ unsigned char** PGMProcessor::readPGMData() {
 
 int PGMProcessor::filterComponentsBySize(int minSize, int maxSize){
     // Iterate through the vector
+
+    // std::cout << "test" << std::endl;
+
+    if (maxSize = 0){
+        maxSize = rows*cols;
+    }
+
     for (auto iter = compSharedPtr.begin(); iter != compSharedPtr.end(); ) {
         // If the number of pixels is less than minSize or greater than maxSize, remove the element
         if ((*iter)->getPixelNum() < minSize || (*iter)->getPixelNum() > maxSize) {
@@ -224,7 +242,7 @@ see ConnectedComponent class;
 print out to std::cout: component ID, number of pixels
 */
 void PGMProcessor::printComponentData(const ConnectedComponent &comp) const {
-    std::cout << comp.getID() << " - Size: " << comp.getPixelNum() << std::endl;
+    std::cout << comp.getID() << " - " << comp.getPixelNum() << " pixels" << std::endl;
 }
 
 /*
@@ -239,7 +257,7 @@ void PGMProcessor::print() {
         printComponentData(*compSharedPtr[i]);
     }
 
-    std::cout << "Total Components: " << sizeof(compSharedPtr) << std::endl;
+    std::cout << "Total Components: " << compSharedPtr.size() << std::endl;
     std::cout << "Smallest Component: " << getSmallestSize() << std::endl;
     std::cout << "Largest Component: " << getLargestSize() << std::endl;
 }

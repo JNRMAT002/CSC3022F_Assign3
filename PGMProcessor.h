@@ -86,10 +86,12 @@ namespace JNRMAT002 {
     private:
     std::string inputFile;
     std::vector<std::shared_ptr<ConnectedComponent>> compSharedPtr;
-    unsigned int rows, cols;
+    // unsigned int rows, cols;
     int numComponents; //Final number of components stored in container | return value for extractComponents()
     const unsigned char maxIntensity = 255;
     const unsigned char minIntensity = 0;
+    unsigned int cols, rows, maxVal = 0;
+
     };
 }
 
